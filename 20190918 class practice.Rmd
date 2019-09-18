@@ -1,0 +1,154 @@
+---
+title: "20190918 class practice"
+author: "林奕齊"
+date: "2019/9/18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+StuList <- list(
+  次序=c(1,2,3,4,5,6,7,8),
+  學號=c(172,214,322,425,517,833,752,114),
+  姓名=c("小明","大雄","胖虎","小新","大白","阿華","小英","阿美"),
+  性別=c("男","男","男","女","女","男","女","男"),
+  成績=c(80,42,90,82,50,77,30,90)
+  )
+StuList 
+as.data.frame(StuList) -> StuDFfromList
+StuDFfromList
+```
+
+```{r}
+StuDF <- data.frame(
+  次序=c(1,2,3,4,5,6,7,8),
+  學號=c(172,214,322,425,517,833,752,114),
+  姓名=c("小明","大雄","胖虎","小新","大白","阿華","小英","阿美"),
+  性別=c("男","男","男","女","女","男","女","男"),
+  成績=c(80,42,90,82,50,77,30,90)
+  )
+StuDF 
+```
+
+```{r}
+class(StuDF)
+typeof(StuDF)
+
+length(StuDF) # 從向量角度看 ( 變數 )
+nrow(StuDF) # 從矩陣角度看 ( 資料  )
+
+str(StuDF)
+head(StuDF) # 前六筆
+tail(StuDF) # 後六筆
+
+StuDF
+slice(StuDF,1:3)
+slice(StuDF,4:5)
+slice(StuDF,n())
+
+slice(StuDF,(n()-1):n())
+
+```
+
+```{r}
+StuDF
+slice(StuDF,-5:-7)
+slice(StuDF,c(-5,-6,-7)) # 同上
+slice(StuDF,-(5:7)) # 同上
+
+```
+
+```{r}
+library(readr)
+collegeData <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/103_student.csv")
+
+str(collegeData)
+
+collegeData %>% slice(c(1:4 , (n()-2) : n()) , 101:110) # 前4筆、後3筆、第101到110筆
+
+```
+
+```{r}
+StuDF
+mutate(StuDF,
+       調分後成績=成績+10)
+transmute(StuDF,
+       調分後成績=成績+10) # 不保留其他變數
+StuDF
+mutate(StuDF,
+       調分後成績=成績+10) -> StuDF # 更動原資料內容
+
+StuDF$調分後成績 <-
+  StuDF$成績+10 # 不使用 dplyr
+
+collegeData2<- mutate(collegeData, 男生=一年級男生+二年級男生+三年級男生+四年級男生) 
+collegeData2$女生 <- collegeData2$一年級女生 + collegeData2$二年級女生 + collegeData2$三年級女生 + collegeData2$四年級女生
+
+mutate(collegeData2, 男女生比 = 男生 / 女生)
+
+```
+
+
+```{r}
+StuDF
+summarise(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
