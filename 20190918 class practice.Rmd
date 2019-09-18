@@ -104,33 +104,212 @@ summarise(StuDF,
         平均成績=mean(成績),
         最高分=max(成績),
         最低分=min(成績))
+
+mutate(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+
+mutate(StuDF, 調分成績 = (成績 + (max(成績)-min(成績)) / 5))
+
+
+
 ```
 
 ```{r}
+StuDF
+mutate(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績)) -> StuDF2
+StuDF2
+```
+
+```{r}
+StuDF2
+names(StuDF2)
+select(StuDF2,
+       姓名,學號,成績,調分後成績)
+select(StuDF2,
+       -次序,-性別,-最高分,-最低分)
+```
+
+```{r}
+select(StuDF2,
+       次序,性別,
+       contains("最"))
+
+select(StuDF2,
+       -次序,-性別,
+       -contains("最"))
+select(collegeData,
+       contains("男生"))
+```
+
+```{r}
+StuDF
+# logical vector
+logiChoose <- c(
+  F,F,F,T,T,F,T,F
+)
+# 使用logical vector選擇所要觀測值"女"
+StuDF[logiChoose,]
+
+
+logiChoose
+which(logiChoose) # 顯示向量為真的位置
+slice(
+  StuDF,which(logiChoose)
+)
+
+StuDF$性別=="女" # logical predicate
+
+logiChoose <- StuDF$性別=="女"
+StuDF[logiChoose,]
+
+```
+
+
+```{r}
+# relational operators
+StuDF$性別=="女" 
+StuDF$成績>60
+
+# combined with logical operator
+(StuDF$性別=="女" & StuDF$成績>60) -> logiChoose2
+logiChoose2
+
+StuDF[logiChoose2,]
+
+
+StuDF
+filter(StuDF,
+       性別=="女")
+filter(StuDF,
+       (性別=="女" & 成績>60))
+filter(StuDF,
+       性別=="女",
+       成績>60) # 多個AND條件可用,分隔
+
+StuDF2
+StuDF %>% filter(性別 == "女") %>% summarise(平均成績 = sum(成績)/n(),最高分=max(成績), 最低分=min(成績))
+
+collegeData %>% filter(縣市名稱 == "30 臺北市")
+collegeData %>% filter(縣市名稱 %in%  c("30 臺北市","01 新北市"))
+```
+
+
+```{r}
+group_by(StuDF,
+         性別) -> StuDF_by性別
+
+# 使用grouped data frame
+summarise(StuDF_by性別,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+
+# 使用ungrouped data frame
+summarise(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+```
+
+```{r}
+mutate(
+  StuDF_by性別,
+  最高分=max(成績),
+  最低分=min(成績),
+  調分大小=(最高分-最低分)/5,
+  調分後成績=成績+調分大小
+) -> StuDF_依性別調分
+StuDF_依性別調分 # 男女生調分不同
+
+
+group_by(StuDF,
+         性別,
+         (成績>75)) -> StuDF_by性別成績
+
+summarise(StuDF_by性別成績,
+          平均成績=mean(成績),
+          人數=n())
+
+ungroup(StuDF_by性別成績) -> 
+  StuDF_調分後
+StuDF_調分後
+```
+
+依等級別,縣市名稱分群後,
+
+計算一年級男/女生比例後,
+
+找出男女生比例最高的等級別,縣市名稱組合。
+
+計算collegeData中不同**縣市名稱,體系別,及等級別**的一年級男生及一年級女生總數（使用sum）和學校數目。
+```{r}
+group_by(collegeData,
+         縣市名稱,體系別,等級別) -> collegeData_grouped
+collegeData_grouped
+collegeData
+summarise(collegeData_grouped,
+          一年級男生總數=sum(一年級男生),
+          一年級女生總數=sum(一年級女生),
+          學校數目=n())
+```
+
+
+計算collegeData中不同**縣市名稱,體系別**的一年級男生及一年級女生總數（使用sum）和學校數目。
+```{r}
+group_by(collegeData,
+         縣市名稱,體系別) -> collegeData_grouped2
+summarise(collegeData_grouped2,
+          一年級男生總數=sum(一年級男生),
+          一年級女生總數=sum(一年級女生),
+          學校數目=length(unique(學校名稱)))
+```
+
+
+
+
+```{r}
+collegeData %>%
+  group_by(等級別,縣市名稱) %>%
+  summarise(
+    一年級男女生比例=sum(一年級男生)/sum(一年級女生)
+  ) %>%
+  ungroup() ->
+  collegeData_result
+collegeData_result
+
+which.max(collegeData_result$一年級男女生比例) -> locMax
+locMax
+collegeData_result[locMax,]
 
 ```
 
 ```{r}
+load(url("https://www.dropbox.com/s/duh5aaqgl2f5m3z/loopTranscriptData.Rda?raw=1"))
+transcriptDataFinal
 
+transcriptDataFinal %>% group_by(學號,學年,學期) %>% summarise(平均成績 = sum(學期成績*學分數)/sum(學分數))                                                         
 ```
 
+計算每位學生每學期學分數在必/選/通 三類的學分數比重。
 ```{r}
+transcriptDataFinal %>% group_by(學號,學年,學期) %>% mutate(總學分數 = sum(學分數)) %>% filter(`必選修類別（必∕選∕通）` == "必")  %>%  summarise(必修比重=sum(學分數/總學分數))
+transcriptDataFinal %>% group_by(學號,學年,學期) %>% mutate(總學分數 = sum(學分數)) %>% filter(`必選修類別（必∕選∕通）` == "選")  %>%  summarise(選修比重=sum(學分數/總學分數))
+transcriptDataFinal %>% group_by(學號,學年,學期) %>% mutate(總學分數 = sum(學分數)) %>% filter(`必選修類別（必∕選∕通）` == "通")  %>%  summarise(通識比重=sum(學分數/總學分數))
 
 ```
 
+
+學屆為100（即100學年入學）的學生，各系學生在學所修總學分數之中位數，何系最高？
 ```{r}
+transcriptDataFinal %>% group_by(學號,學年,學系) %>% filter(學年 == 100) %>% summarise(總學分數 = sum(學分數)) -> final
 
+final[which.max(final$總學分數),]
 ```
-
-
-
-
-
-
-
-
-
-
 
 
 ## R Markdown
