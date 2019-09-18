@@ -1,0 +1,68 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+
+
+
+
+
+
+```{r}
+Sys.setlocale(category = "LC_ALL", locale = "cht")
+StuDF <- data.frame(
+  "次序"=c(1,2,3,4,5,6,7,8),
+  "學號"=c(172,214,322,425,517,833,752,114),
+  "姓名"=c("小明","大雄","胖虎","小新","大白","阿華","小英","阿美"),
+  "性別"=c("男","男","男","女","女","男","女","男"),
+  "成績"=c(80,42,90,82,50,77,30,90)
+  )
+StuDF
+Sys.setlocale(category = "LC_ALL", locale = "cht")
+library(readr)
+collegeData <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/103_student.csv")
+
+mutate(StuDF,
+       "調整後成績" = StuDF$"成績"+10) %>% View
+transmute(StuDF,
+       調分後成績=成績+10) # 不保留其他變數
+```
+
+```{r}
+StuDF
+summarise(StuDF,
+        "平均成績"=mean(StuDF$"成績"),
+        "最高分"=max(StuDF$"成績"),
+        "最低分"=min(StuDF$"成績"))
+mutate(StuDF,
+        "平均成績"=mean(StuDF$"成績"),
+        "最高分"=max(StuDF$"成績"),
+        "最低分"=min(StuDF$"成績")) -> StuDF2
+
+mutate(StuDF2, "調分後成績" = StuDF$"成績" + (max(StuDF$"成績")-min(StuDF$"成績"))/5) -> StuDF2
+
+StuDF2
+names(StuDF2)
+select(StuDF2,
+       "姓名","學號","成績","調分後成績")
+select(StuDF2,
+       -"次序",-"性別", -"最高分" ,- "最低分",-"平均成績")
+
+```
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
