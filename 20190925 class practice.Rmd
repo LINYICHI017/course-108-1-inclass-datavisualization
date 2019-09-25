@@ -136,7 +136,110 @@ tailex %>% mutate(日期 = ymd(日期)) -> tailex1
 tailex1
 ```
 
+```{r}
+read_csv("http://mopsfin.twse.com.tw/opendata/t187ap03_L.csv")
 
+
+```
+
+
+# ggplot2
+```{r}
+library(readr)
+subsetDataTWbank <- read_csv("https://www.dropbox.com/s/t8ulj3d7cgl8jh5/subsetDataTWbank.csv?dl=1")
+subsetDataTWbank 
+library(ggplot2)
+ggplot(subsetDataTWbank)+
+  geom_line(
+    aes(x=西元年月,y=`定存利率-一個月-固定`)
+  )
+
+library(ggplot2)
+ggplot(subsetDataTWbank)+
+  geom_line(
+    aes(x=西元年月,y=`定存利率-一個月-固定`)
+  )+
+  geom_point(
+    aes(x=西元年月,y=`定存利率-一個月-固定`)
+  )
+
+
+subsetDataTWbank %>% gather(contains("定"), key = "定存類型", value = "利率") -> subsetDataTWbank_gather
+subsetDataTWbank_gather %>%
+  ggplot()+
+  geom_boxplot(
+    aes(x=定存類型,y=利率)
+  )
+
+
+subsetDataTWbank_gather %>%
+  ggplot()+
+  geom_line(
+    aes(x=西元年月,y=利率,color=定存類型, alpha = 0.2, size = 2) # alpha 只能用在連續變數
+  )
+
+
+
+
+
+```
+
+
+## 改變levels出現順序
+```{r}
+subsetDataTWbank_gather$定存類型 %>% 
+  as.factor %>% levels
+subsetDataTWbank_gather %>%
+  mutate(
+    定存類型 = factor(定存類型,levels=c("定存利率-一個月-固定","定存利率-二年期-固定","定存利率-三年期-固定"))
+  ) -> subsetDataTWbank_gather
+
+
+```
+
+```{r}
+twCalendar <- c("民國88年11月1日","民國88年12月1日","民國89年1月1日")
+
+twCalendar %>%
+  # [:digit:]+ : 取出字串中的數字部份
+  stringr::str_extract_all("[:digit:]+") %>% View()
+
+twCalendar %>%
+  # [:digit:]+ : 取出字串中的數字部份
+  stringr::str_extract_all("[:digit:]+") %>%
+  # 將每個日期的「年」數字加上1991再合併年月日成為`yyyy-mm-dd`格式
+  purrr::map_chr(
+             function(x) {
+               x1=as.integer(x[[1]])+1911
+               x[[1]]=as.character(x1)
+               stringr::str_c(x,collapse="-")
+             }
+             ) -> westernCalendar
+
+westernCalendar
+# 換成"時間"才可以做"連續"時間圖形
+westernCalendar %>%
+  lubridate::ymd() -> datetimeCalendar
+class(datetimeCalendar)
+
+
+subsetDataTWbank
+subsetDataTWbank %>%
+  mutate(
+    年月= 年月 %>%
+      stringr::str_extract_all("[:digit:]+") %>%
+      purrr::map_chr(
+                 function(x) {
+                   x1=as.integer(x[[1]])+1911
+                   x[[1]]=as.character(x1)
+                                stringr::str_c(x,collapse="-")
+                 }
+                 ),
+    年月日=stringr::str_c(年月,"01",sep="-"),
+    西元年月日=lubridate::ymd(年月日)
+  )
+
+```
 
 ## R Markdown
 
