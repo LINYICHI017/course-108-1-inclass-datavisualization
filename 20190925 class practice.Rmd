@@ -1,0 +1,159 @@
+---
+title: "20190925 class practice"
+author: "Eric LIin"
+date: "2019/9/25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 1.4 gather and spread
+## 1.4.1 gather
+```{r}
+df_gatherExamole <- data.frame(
+  country = c("A","B","C"),
+  `1999` = c("0.7k", "37k", "212k"),
+  `2000` = c("2k", "80k", "213k"),
+  check.names = F
+)
+df_gatherExamole
+
+
+df_gatherExamole %>% gather(`1999`,`2000`,key = `年分`, value=`人口`)
+
+```
+
+```{r}
+library(readr)
+collegeData <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/103_student.csv")
+collegeData 
+collegeData %>%  gather(contains("生"),key = `類別`, value=`人數`) -> collegeData_gather
+
+```
+
+
+```{r}
+library(readr)
+df_taoyuanMarriage <- read_csv("https://data.tycg.gov.tw/opendata/datalist/datasetMeta/download?id=f95d1a33-ec56-44c5-a9ec-3afba8157e39&rid=fd2070ef-7431-4f9c-bc3a-82d7bfbcd2fb")
+
+df_taoyuanMarriage
+
+# 1
+df_taoyuanMarriage %>% 
+  gather(-`月份區域別`, key = `月份`, value = `結婚對數`) -> df_taoyuanMarriage1
+# 2
+df_taoyuanMarriage1 %>% group_by(`月份`) %>% summarise(總結婚對數 = sum(結婚對數) )
+# 3
+df_taoyuanMarriage1 %>% group_by(`月份區域別`) %>% summarise(最高峰月份 = 月份[[which.max(結婚對數)]] ) 
+
+
+
+```
+
+## 1.4.2 spread
+```{r}
+df_spreadExample <- data.frame(
+  id = c(1,1,1,2,2,2),
+  var = c("花朶萼片長度", "學名", "總類數"),
+  value = c(5.1, "setosa", 1, 
+            7.0, "versicolor", 2))
+df_spreadExample
+spread(df_spreadExample,
+       var,value)  
+```
+
+```{r}
+collegeData_gather
+collegeData_gather %>%
+  spread(
+    類別,人數
+  )
+
+
+collegeData_gather %>% group_by(`學校名稱`) %>% summarise(學生總數 = sum(人數))
+
+
+
+
+```
+
+
+```{r}
+df_twbankExchangeRate <- read_csv("http://www.bot.com.tw/Govinfo/opendata/csv/151/20180101-20181231-FXCRT.csv")
+df_twbankExchangeRate
+df_twbankExchangeRate %>% select(-即期賣出匯率) %>% spread(幣別, 即期買入匯率)
+```
+
+# 變數類別調整
+```{r}
+df_twbankExchangeRate 
+df_twbankExchangeRate %>%  mutate(
+  幣別 = as.factor(幣別),
+  即期買入匯率 = as.double(即期買入匯率),
+  即期賣出匯率 = as.double(即期賣出匯率),
+  日期 = ymd(日期)
+  )
+
+```
+
+# 1.6 Data import
+```{r}
+library(readr); library(dplyr)
+# 線上引入原始資料成字串向量
+read_lines("http://www.taifex.com.tw/data_gov/taifex_open_data.asp?data_name=DailyForeignExchangeRates") ->
+  originalLines
+
+# 將字串由CP950編碼改成UTF8再讀成data frame data2
+originalLines %>%
+  iconv(from="CP950",to="UTF8") %>% 
+  read_csv() -> data2
+
+# windows 
+read.csv("http://www.taifex.com.tw/data_gov/taifex_open_data.asp?data_name=DailyForeignExchangeRates")
+read.csv("http://www.taifex.com.tw/data_gov/taifex_open_data.asp?data_name=DailyForeignExchangeRates", locale = locale(encoding = "CP950"))
+
+```
+
+# 改日期
+```{r}
+tailex <- read.csv("http://www.taifex.com.tw/data_gov/taifex_open_data.asp?data_name=DailyForeignExchangeRates")
+
+tailex %>% mutate(日期 = ymd(日期)) -> tailex1
+tailex1
+```
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
