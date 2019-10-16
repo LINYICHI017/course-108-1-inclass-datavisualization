@@ -166,17 +166,17 @@ ggplot(subsetDataTWbank)+
 
 subsetDataTWbank %>% gather(contains("定"), key = "定存類型", value = "利率") -> subsetDataTWbank_gather
 subsetDataTWbank_gather %>%
+  ggplotsubsetDataTWbank_gather %>%
   ggplot()+
+  geom_line(
+    aes(x=西元年月,y=利率,color=定存類型, alpha = 0.2, size = 2) # alpha 只能用在連續變數
+  )()+
   geom_boxplot(
     aes(x=定存類型,y=利率)
   )
 
 
-subsetDataTWbank_gather %>%
-  ggplot()+
-  geom_line(
-    aes(x=西元年月,y=利率,color=定存類型, alpha = 0.2, size = 2) # alpha 只能用在連續變數
-  )
+
 
 
 
