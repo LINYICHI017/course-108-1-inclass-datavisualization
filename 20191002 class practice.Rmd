@@ -209,12 +209,15 @@ basicScatterPlot +
 
 
 ```{r}
+library(tidyverse)
+library(plotly)
+
 disposableIncome <- read_csv("https://www.dropbox.com/s/z80sbjw94cjex8x/disposableIncome.csv?dl=1",
 locale = locale(encoding = "BIG5"), skip = 4)
 
-disposableIncome %>% slice(28:43) %>% gather(contains("可"), key = "不同家庭", value = "所得") -> disposableIncome1 
+disposableIncome %>% slice(32:43) %>% gather(contains("可"), key = "不同家庭", value = "所得") -> disposableIncome1 
 
-filter(disposableIncome1 , X1 == 2003) -> 基期所得
+filter(disposableIncome1 , X1 == 2007) -> 基期所得
 
 filter(disposableIncome1 , 不同家庭 == '平均每戶可支配所得') -> 平均所得
 filter(disposableIncome1 , 不同家庭 == '可支配所得按戶數五等分位組-最低所得組') -> 最低所得
@@ -230,16 +233,7 @@ mutate(最高所得, 速率 = (最高所得$所得 - 基期所得$所得[6])/基
 
 rbind(平均所得,最低所得,次低所得,中間所得,最高所得) -> 金融風暴
 
-pal_qual <- colorspace::qualitative_hcl(
-  n = 7, 
-  h = c(0, 360), c = 35, l = 85, 
-  register = "myQualitative"
-  )
-
-library(tidyverse)
-library(plotly)
-
-金融風暴 %>%  mutate("年" = as.integer(X1)) %>% ggplot(aes(x = 年, y = 速率, color = 不同家庭 )) + scale_fill_discrete_qualitative(palette="myQualitative",nmax=5) + geom_line() -> finalplot
+金融風暴 %>%  mutate("年" = as.integer(X1)) %>% ggplot(aes(x = 年, y = 速率, color = 不同家庭 ))  + geom_line() -> finalplot
 
 finalplot %>% ggplotly()
 
