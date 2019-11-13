@@ -1,0 +1,192 @@
+---
+title: "20191113 class practice"
+author: "Eric Lin"
+date: "2019/11/13"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr);
+library(tidyr); library(showtext)
+
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 引入simple feature處理套件：一種地圖資訊的儲存格式，將地理區域的特徵以點、線、多邊體等簡單幾何特徴記錄。
+```{r}
+install.packages("sf")
+library(sf)
+```
+
+##  Coordinate Reference Systems (CRS)
+```{r}
+# 單點
+point <- st_point(
+  c(2,3) # 座標在 (2, 3) 的位置
+)
+
+point %>% 
+  ggplot() + 
+  geom_sf()
+
+# 多點
+mpoint <- st_multipoint(
+    rbind(
+      c(1,0),
+      c(2,3),
+      c(-1,2)
+      )
+)
+
+mpoint %>% 
+  ggplot() + 
+  geom_sf()
+
+
+# 一條線
+line <- st_linestring(
+    rbind(
+      c(1,0),
+      c(2,3),
+      c(-1,2)
+      )
+)
+
+line %>% 
+  ggplot() +
+  geom_sf()
+
+
+#多條線
+mline <- st_multilinestring(
+  list(                   # list 用來合併兩個矩陣
+    rbind(
+      c(1,0),
+      c(2,3),
+      c(-1,3)
+      ),
+    rbind(
+      c(-2,3),
+      c(-1,-1)
+      )
+    )
+  )
+
+mline %>%
+  ggplot() +
+  geom_sf()
+
+
+# 一個多邊體
+outer <-     
+  rbind( # 外圍
+    c(1,5),
+    c(2,1),
+    c(5,1),
+    c(5,5),
+    c(1,5)) # 必需自行輸入起點 close it (連到原點才是多面體)
+
+hole <-
+  rbind( # 洞
+    c(2,4),
+    c(3,2),
+    c(4,3),
+    c(2,4))  # 必需自行輸入起點 close it
+  
+poly <- st_polygon(
+  list(
+    outer, # 最外圍是放在第一個，之後的多面體都是洞
+    hole
+  )
+) 
+
+poly %>% 
+  ggplot() +
+  geom_sf()
+
+
+# 多個多邊體
+outer2 <- outer + 12
+hole2 <- hole + 12
+
+mpoly <- st_multipolygon(
+  list(
+    list(
+      outer,
+      hole
+    ),
+    list(
+      outer2,
+      hole2
+    )
+  )
+) 
+
+mpoly %>% ggplot() + geom_sf()
+
+
+# 複合形狀組合
+st_geometrycollection(
+  list(
+    point, mpoint,
+    line, mline,
+    poly, mpoly
+  )
+) %>% ggplot() + geom_sf()
+
+```
+
+## Column (sfc)
+```{r}
+# 建立geometry欄位
+## 架構: st_sfc() to form simple features column.
+sfg_county1 <- st_polygon(
+  list(
+  outer,hole
+))
+sfg_county2 <- st_polygon(
+  list(
+  outer2, hole2
+))
+
+sfc_county12column <- 
+  st_sfc(sfg_county1,
+         sfg_county2)
+
+sfc_county12column %>% 
+  ggplot +
+  geom_sf()
+
+## 設定CRS
+  sfc_county12column %>%
+  st_set_crs(4326) -> # EPSG: 4326
+  sfc_county12column
+  
+```
+
+
+## 與data frame合併 (sf)
+```{r}
+# st_set_geometry(df,geo_column)
+df_county12 <- data.frame(
+  name=c("county1","county2"),
+  population=c(100,107)
+)
+
+df_county12 %>%
+  st_set_geometry(sfc_county12column) -> df_county12
+
+df_county12 %>% names
+
+df_county12 %>% 
+  ggplot() +
+  geom_sf(aes(fill = population)) +
+  geom_sf_text(aes(label = name))
+
+```
+
