@@ -1,0 +1,144 @@
+---
+title: "20191120 class practice"
+author: "Eric Lin"
+date: "2019/11/20"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr);
+library(tidyr); library(showtext)
+
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+install.packages("psych")
+library(psych)
+library(clipr)
+read_clip() -> name # 複製貼上文字
+
+```
+
+# 5.7 常見圖資運算
+```{r}
+# 取出spData套件附的world data
+data(world,package="spData")
+class(world) # 已是sf object
+```
+
+```{r}
+read_sf("COUNTY_MOI_1080726.shp")-> sf_taiwan
+```
+
+```{r}
+# 目前 CRS
+library(sf)
+world %>% st_crs 
+world %>% 
+  st_geometry() %>%
+  ggplot() + geom_sf()
+
+# 更換 CRS
+world %>% 
+  st_transform(crs="+proj=laea +y_0=0 +lon_0=155 +lat_0=-90 +ellps=WGS84 +no_defs") -> world_proj
+  
+world_proj %>%
+  ggplot() + geom_sf()
+```
+
+```{r}
+install.packages("rmapshaper")
+
+sf_taiwan %>%
+  rmapshaper::ms_simplify() -> sf_taiwan_simplify
+
+sf_taiwan_simplify %>%
+  st_crop(
+    xmin=119, xmax=123,
+    ymin=21, ymax=26
+  ) %>%
+  ggplot()+geom_sf()
+```
+
+```{r}
+world %>%
+  st_crop(xmin = 116, xmax = 123, )
+```
+
+
+# 5.7.2 找中心點： st_centroid()
+```{r}
+load(url("https://www.dropbox.com/s/elnvocol0nnkcc9/sf_northTaiwan.Rda?dl=1"))
+
+library(lwgeom )
+
+sf_northTaiwan %>%
+  st_centroid(of_largest_polygon = T) ->
+  sf_centroid_northTaiwan
+
+sf_centroid_northTaiwan
+
+sf_centroid_northTaiwan %>%
+  st_coordinates() -> coord_centroid_northTaiwan # 取出座標
+
+coord_centroid_northTaiwan
+
+sf_northTaiwan$x_centroid <- coord_centroid_northTaiwan[,"X"]
+sf_northTaiwan$y_centroid <- coord_centroid_northTaiwan[,"Y"]
+
+sf_northTaiwan %>%
+  ggplot()+
+  geom_sf()+
+  geom_point(
+    aes(
+      x=x_centroid,y=y_centroid, 
+      shape=COUNTYNAME, color=COUNTYNAME
+    ), size=2
+  )
+```
+
+```{r}
+load(url("https://www.dropbox.com/s/uvco1te2kbs6o01/MRT_Taipei.Rda?dl=1"))
+sf_mrtStops_tpe
+
+mrt <- read_sf("C:/Users/linyi/GitHub/course-108-1-inclass-datavisualization/MARK_捷運車站_1080626.shp") 
+
+sf_mrtStops_tpe %>%
+  st_crs() -> sf_mrtStops_tpe_crs
+sf_mrtStops_tpe_crs
+
+### Obtain BL
+
+sf_mrt_tpe_bl %>% 
+            mutate(
+              站號=str_extract(經過路線,"(?<=(BL))[:digit:]+")
+            ) %>%
+            arrange(站號) -> sf_mrt_tpe_bl
+
+sf_northTaiwan %>% 
+  ggplot() + 
+  geom_sf() + 
+  geom_sf(data = sf_mrt_tpe_bl) +
+  coord_sf(xlim=c(121.4,121.7),
+    ylim=c(24.9,25.1)) -> gg_tpe_mrt
+
+gg_tpe_mrt
+
+
+sf_mrt_tpe_bl %>% st_coordinates() -> bl_coords
+
+gg_tpe_mrt + 
+  geom_path(
+  data = data.frame(
+    x = bl_coords[,"X"],
+    y = bl_coords[,"Y"]
+  ), aes(x = x, y = y)
+) 
+  
+```
+
