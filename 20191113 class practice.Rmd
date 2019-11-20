@@ -190,3 +190,81 @@ df_county12 %>%
 
 ```
 
+## 儲存成shp檔(檔案群) 
+```{r}
+dir.create("county12") # 創造資料夾
+write_sf(df_county12,"county12/county12.shp") # 後面是儲存的檔名
+```
+
+### 資料來源：政府資料開放平台
+```{r}
+load(url("https://www.dropbox.com/s/uvco1te2kbs6o01/MRT_Taipei.Rda?dl=1"))
+
+sf_mrt_tpe
+
+sf_mrt_tpe %>% 
+  filter(str_detect(經過路線, "BL")) -> sf_mrt_tpe_bl
+
+sf_mrt_tpe_bl %>% 
+  st_coordinates() %>%# 取出每個點的座標
+  st_linestring() %>% 
+  ggplot() + 
+  geom_sf() # 未整理資料
+
+sf_mrt_tpe_bl %>% 
+  mutate(站號 = str_extract(經過路線, "(?<=(BL))[:digit:]+")) %>%  # (字裡面有BL) [的 數字] 全取( + 不限位數) 
+  arrange(站號) %>%  # 排序站號
+  st_coordinates() %>%# 取出每個點的座標
+  st_linestring() %>% 
+  ggplot() + 
+  geom_sf() # 捷運板南線 sf_geometry
+
+sf_mrt_tpe_bl %>% 
+  mutate(站號 = str_extract(經過路線, "(?<=(BL))[:digit:]+")) %>%  # (字裡面有BL) [的 數字] 全取( + 不限位數) 
+  arrange(站號) %>%  # 排序站號
+  st_coordinates() %>%# 取出每個點的座標
+  st_linestring() -> sf_mrt_tpe_bl2
+
+
+df_mrt <- data.frame(
+  linename = "BL"
+)
+
+sf_mrt_tpe_bl2 %>%
+  st_sfc() -> sfc_mrt_bl2
+
+df_mrt %>%
+  st_set_geometry(sfc_mrt_bl2) -> 
+  df_mrt
+
+df_mrt
+
+sf_mrt_tpe %>%
+  st_crs -> mrt_crs
+
+df_mrt %>%
+  st_set_crs(mrt_crs) ->
+  df_mrt
+
+df_mrt
+```
+
+# 常見圖資運算
+```{r}
+# sf::read_sf(".shp檔位置")
+sf_county12=read_sf("county12/county12.shp") 
+```
+
+```{r}
+# 取出spData套件附的world data
+install.packages("spData")
+data(world,package="spData") # 取出spData套件附的world data
+class(world) # 已是sf object
+
+world[141,] %>% st_geometry() %>% ggplot() + geom_sf()
+
+read_sf("COUNTY_MOI_1080726.shp")
+
+sf_taiwan
+```
+
