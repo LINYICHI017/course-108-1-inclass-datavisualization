@@ -1,0 +1,60 @@
+---
+title: "Untitled"
+author: "Eric Lin"
+date: "2019/10/31"
+output: html_document
+---
+
+# package for optimization 
+```{r}
+library(optimization)
+```
+
+```{r}
+matrix(c(1,2,3,4,5,6,7,8,9),nrow = 3, ncol = 3,byrow = T) -> A
+matrix(c(1,2,3,4,5,6,7,8,10),nrow = 3, ncol = 3,byrow = T) -> C
+
+A + C
+A%*%C
+
+options(scipen = 999)
+eigen(A)
+
+# inverse of matrix 
+solve(C)
+
+```
+
+# linear programming
+```{r}
+install.packages("lpSolve")
+library(lpSolve)
+
+
+f_obj <- c(3,5)
+f_con <- matrix(c(1,0,0,2,3,2,1,0,0,1),nrow = 5, ncol = 2, byrow = T) 
+f_dir <- c("<=","<=","<=",">=",">=")
+f_rhs <- c(4,12,18,0,0)
+
+lp("max", f_obj, f_con, f_dir, f_rhs) -> lp1
+lp1$solution
+```
+
+# nonlinear  programming
+```{r}
+
+```
+
+# simultaneous system equation
+```{r}
+alpha <-  2
+beta <-  0.5
+eta <-  15
+gamma <-  0.3
+omega <-  0.1
+phi <-  6
+function (p,y){
+  c(z = sqrt(p*y), z + alpha*p^2 + beta*y - eta = 0, 
+}
+```
+
