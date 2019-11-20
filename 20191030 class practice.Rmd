@@ -1,0 +1,230 @@
+---
+title: "Untitled"
+author: "Eric Lin"
+date: "2019/10/30"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+rm(list=ls())
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(colorspace); library(grDevices); library(shiny); library(shinyjs); library(scales)
+library(tidyr); library(showtext); library(tidyverse); library(colorspace)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(fig.align='center', fig.showtext=T)
+```
+
+
+```{r}
+d <- ggplot(diamonds, aes(carat, price))
+d + geom_point() 
+d + geom_hex(
+  aes(fill=stat(density))
+)
+```
+
+```{r}
+
+
+```
+
+```{r}
+df_position <- data.frame(
+  x=rep(c("a","b"), each=3),
+  y=c(3,1,3,8,6,10)
+)
+
+df_position %>%
+  ggplot(aes(x=x,y=y))+
+  geom_point(
+    color="#5A99B3"
+  ) + 
+  scale_y_continuous(
+    breaks=c(1,3,6,8,10)
+  )+
+  annotate(
+    geom="text",
+    x=1.1, y=3, label="x 2" # 利用factor的type為integer的特質設x位置
+  )+
+  labs(
+    title="Position identity",
+    subtitle="Position沒有調整"
+    ) -> graphList$position_none
+
+df_position %>%
+  ggplot(aes(x=x,y=y,color=y))+
+  geom_point(
+    position="stack", color="#5A99B3"
+  )+
+  labs(
+    title= "Position stack",
+    subtitle = "各x類y值疊加上去" 
+  )-> graphList$position_stack
+
+ggpubr::ggarrange(
+  graphList$position_none,
+  graphList$position_stack
+)
+```
+
+```{r}
+install.packages("ggpubr")
+
+library(ggpubr)
+
+df0 <- data.frame(
+  x=c(1,2,1,3,2),
+  y=c(2,3,1,2,4),
+  label=c("a","b","c","d","e")
+)
+df0 %>%
+  ggplot(aes(x=x,y=y))+
+  geom_label(
+    aes(label=label), fill="pink"
+    )-> plotbase0
+
+list_graphs <- list()
+
+plotbase0+geom_line()+labs(title="geom_line") -> 
+  list_graphs$geom_line
+
+plotbase0+geom_path()+labs(title="geom_path") -> # 經濟上：結構性改變。例如：菲利浦曲線
+  list_graphs$geom_path
+
+ggpubr::ggarrange(
+  list_graphs$geom_line, list_graphs$geom_path
+)
+```
+
+# 創造底(格)線 my_Grid：輔助畫地圖，確認座標
+
+```{r}
+ggplot() + 
+  theme_linedraw() +
+  scale_x_continuous(limits = c(0,6), 
+                     breaks = 0:6, 
+                     expand = expand_scale(add = c(0,0))) + # 上下限要擴充多少空間
+  scale_y_continuous(limits = c(0,6), 
+                     breaks = 0:6, 
+                     expand = expand_scale(mult = c(0,0))) -> myGrids
+myGrids                     
+                     
+```
+
+```{r}
+
+list_geometryData <- list()
+list_geometryData$points <- 
+  rbind(
+    c(1,5),
+    c(2,1),
+    c(5,1),
+    c(5,5)) 
+list_geometryData$points %>%
+  as.data.frame() 
+
+myGrids +
+  geom_point(
+    data=as.data.frame(list_geometryData$points),
+    aes(x=V1,y=V2)
+  ) -> list_graphs$point
+
+
+myGrids  + geom_path(
+    data=as.data.frame(list_geometryData$points),
+    aes(x=V1,y=V2)
+  ) -> list_graphs$path
+
+myGrids +
+  geom_polygon(
+    data=as.data.frame(list_geometryData$points),
+    aes(x=V1,y=V2)
+  ) -> list_graphs$polygon
+
+ggpubr::ggarrange(
+  list_graphs$point, list_graphs$path, list_graphs$polygon,
+  ncol=3
+)
+
+```
+
+```{r}
+library(readr)
+df_geo_northTW <- read_csv("https://www.dropbox.com/s/6uljw24zkyj7avs/df_geo_northTW.csv?dl=1")
+
+df_geo_northTW  %>% 
+  filter(COUNTYNAME == c("臺北市", "新北市")) %>%
+  mutate(group = "新北市") -> df
+
+
+df_geo_northTW  %>%
+  mutate(group = "新北市") -> df1
+ 
+myGrids + geom_polygon(data =  df1,  aes(x = x, y = y, group = group, subgroup = COUNTYNAME) ) 
+
+?geom_polygon
+
+df_geo_northTW %>%
+  ggplot()+
+  geom_polygon(
+    aes(x=x,y=y,fill=COUNTYNAME), color="azure4"
+  ) -> list_graphs$northTW
+
+list_graphs$northTW
+
+```
+
+```{r}
+install.packages("magick")
+library(magick)
+
+image_read("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/2450df20386177.562ea7d13f396.jpg") -> taipei101
+
+taipei101 %>%
+  image_info() -> taipei101info
+taipei101info
+
+theme_linedraw()+
+  theme(
+    panel.background = element_rect(fill="cyan4")
+  ) -> list_graphs$theme_backgroundCheck
+
+# 圖片底色非透明
+taipei101 %>%
+  image_ggplot()+
+  list_graphs$theme_backgroundCheck
+
+image_fill(taipei101, "transparent", point = "+100+100", fuzz = 0) %>% # fuzz=對邊界定義模糊度 %>%
+    image_ggplot()+list_graphs$theme_backgroundCheck
+
+image_fill(taipei101,"transparent", point = "+100+100", fuzz=30) %>% # fuzz 嘗試到可以貼近原圖形
+    image_ggplot()+list_graphs$theme_backgroundCheck
+
+image_fill(taipei101,"transparent", point = "+100+100", fuzz=30) -> 
+  taipei101transparent
+
+taipei101transparent %>%
+  as.raster() ->  # raster 是讓圖形呈網格式，可以去對應地圖座標
+  raster_taipei101
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
